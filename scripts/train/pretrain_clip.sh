@@ -1,12 +1,18 @@
+export NUM_GPUS=2
+export NNODES=1
+export RANK=0
+export ADDR=localhost
+export PORT=29500
+
 export OMP_NUM_THREADS=8
 export NCCL_IB_DISABLE=0
 export NCCL_IB_GID_INDEX=3
 export NCCL_SOCKET_IFNAME=eth0
 export NCCL_DEBUG=INFO
 
-LLM_VERSION="Qwen/Qwen2-7B-Instruct"
+LLM_VERSION="/data-mnt/data/chwang/models/Qwen2.5-0.5B"
 LLM_VERSION_CLEAN="${LLM_VERSION//\//_}"
-VISION_MODEL_VERSION="openai/clip-vit-large-patch14-336"
+VISION_MODEL_VERSION="/data-mnt/data/chwang/models/Clip-ViT-Large-Patch14-336"
 VISION_MODEL_VERSION_CLEAN="${VISION_MODEL_VERSION//\//_}"
 
 ############### Pretrain ################
@@ -21,8 +27,8 @@ ACCELERATE_CPU_AFFINITY=1 torchrun --nproc_per_node="${NUM_GPUS}" --nnodes="${NN
     --deepspeed scripts/zero3.json \
     --model_name_or_path ${LLM_VERSION} \
     --version ${PROMPT_VERSION} \
-    --data_path /blip_558k/blip_558k_plain.json \
-    --image_folder /blip_558k/images \
+    --data_path /data-mnt/data/chwang/datasets/llava-v1.5-pretrain/blip_laion_cc_sbu_558k_ex_img_path_sampled.json \
+    --image_folder /data-mnt/data/chwang/datasets/llava-v1.5-pretrain/images \
     --vision_tower ${VISION_MODEL_VERSION} \
     --mm_tunable_parts="mm_mlp_adapter" \
     --mm_vision_select_layer -2 \
@@ -32,12 +38,12 @@ ACCELERATE_CPU_AFFINITY=1 torchrun --nproc_per_node="${NUM_GPUS}" --nnodes="${NN
     --bf16 True \
     --output_dir /checkpoints/projectors/${BASE_RUN_NAME} \
     --num_train_epochs 1 \
-    --per_device_train_batch_size 16 \
-    --per_device_eval_batch_size 4 \
+    --per_device_train_batch_size 2 \
+    --per_device_eval_batch_size 1 \
     --gradient_accumulation_steps 1 \
     --evaluation_strategy "no" \
     --save_strategy "no" \
-    --save_steps 50000 \
+    --save_steps 10000 \
     --learning_rate 1e-3 \
     --weight_decay 0. \
     --warmup_ratio 0.03 \
@@ -50,6 +56,6 @@ ACCELERATE_CPU_AFFINITY=1 torchrun --nproc_per_node="${NUM_GPUS}" --nnodes="${NN
     --lazy_preprocess True \
     --report_to wandb \
     --run_name $BASE_RUN_NAME \
-    --attn_implementation sdpa
+    # --attn_implementation sdpa
 
 # You can delete the sdpa attn_implementation if you want to use flash attn
