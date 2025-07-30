@@ -10,9 +10,9 @@ export NCCL_IB_GID_INDEX=3
 export NCCL_SOCKET_IFNAME=eth0
 export NCCL_DEBUG=INFO
 
-LLM_VERSION="/data-mnt/data/chwang/models/Qwen2.5-0.5B"
+LLM_VERSION="/data/models/Qwen2.5-0.5B-Instruct"
 LLM_VERSION_CLEAN="${LLM_VERSION//\//_}"
-VISION_MODEL_VERSION="/data-mnt/data/chwang/models/Clip-ViT-Large-Patch14-336"
+VISION_MODEL_VERSION="/data/models/Clip-ViT-Large-Patch14-336"
 VISION_MODEL_VERSION_CLEAN="${VISION_MODEL_VERSION//\//_}"
 
 ############### Pretrain ################
@@ -28,7 +28,7 @@ ACCELERATE_CPU_AFFINITY=1 torchrun --nproc_per_node="${NUM_GPUS}" --nnodes="${NN
     --model_name_or_path ${LLM_VERSION} \
     --version ${PROMPT_VERSION} \
     --data_path /data-mnt/data/chwang/datasets/llava-v1.5-pretrain/blip_laion_cc_sbu_558k_ex_img_path_sampled.json \
-    --image_folder /data-mnt/data/chwang/datasets/llava-v1.5-pretrain/images \
+    --image_folder /data/datasets/LLaVA_Train/LLaVA_PT/images \
     --vision_tower ${VISION_MODEL_VERSION} \
     --mm_tunable_parts="mm_mlp_adapter" \
     --mm_vision_select_layer -2 \
@@ -36,7 +36,7 @@ ACCELERATE_CPU_AFFINITY=1 torchrun --nproc_per_node="${NUM_GPUS}" --nnodes="${NN
     --mm_use_im_start_end False \
     --mm_use_im_patch_token False \
     --bf16 True \
-    --output_dir /checkpoints/projectors/${BASE_RUN_NAME} \
+    --output_dir ./checkpoints/projectors/${BASE_RUN_NAME} \
     --num_train_epochs 1 \
     --per_device_train_batch_size 2 \
     --per_device_eval_batch_size 1 \
