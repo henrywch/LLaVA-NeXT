@@ -5,7 +5,7 @@ export ADDR=localhost
 export PORT=29500
 
 export OMP_NUM_THREADS=8
-export NCCL_IB_DISABLE=0
+export NCCL_IB_DISABLE=1
 export NCCL_IB_GID_INDEX=3
 export NCCL_SOCKET_IFNAME=eth0
 export NCCL_DEBUG=INFO
@@ -37,9 +37,9 @@ ACCELERATE_CPU_AFFINITY=1 torchrun --nproc_per_node="${NUM_GPUS}" --nnodes="${NN
     --mm_use_im_patch_token False \
     --output_dir ./checkpoints/projectors/${BASE_RUN_NAME} \
     --num_train_epochs 1 \
-    --per_device_train_batch_size 2 \
+    --per_device_train_batch_size 4 \
     --per_device_eval_batch_size 1 \
-    --gradient_accumulation_steps 1 \
+    --gradient_accumulation_steps 2 \
     --evaluation_strategy "no" \
     --save_strategy "no" \
     --save_steps 10000 \
@@ -54,6 +54,6 @@ ACCELERATE_CPU_AFFINITY=1 torchrun --nproc_per_node="${NUM_GPUS}" --nnodes="${NN
     --lazy_preprocess True \
     --report_to tensorboard \
     --run_name $BASE_RUN_NAME \
-    --attn_implementation sdpa
+    --attn_implementation eager
 
 # You can delete the sdpa attn_implementation if you want to use flash attn
