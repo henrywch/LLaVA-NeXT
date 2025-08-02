@@ -30,7 +30,7 @@ ACCELERATE_CPU_AFFINITY=1 torchrun --nproc_per_node="${NUM_GPUS}" --nnodes="${NN
     --deepspeed scripts/zero3.json \
     --model_name_or_path ${LLM_VERSION} \
     --version ${PROMPT_VERSION} \
-    --data_path=/root/autodl-tmp/datasets/LLaVA_Train/LLaVA_SFT/llava_v1_5_mix665k.json \
+    --data_path=/root/autodl-tmp/datasets/LLaVA_Train/LLaVA_SFT/llava_v1_5_mix665k_ocr_rmd_small.json \
     --image_folder /root/autodl-tmp/datasets/LLaVA_Train/LLaVA_SFT/ \
     --pretrain_mm_mlp_adapter="checkpoints/projectors/${BASE_RUN_NAME}/mm_projector.bin" \
     --mm_tunable_parts="mm_vision_tower,mm_mlp_adapter,mm_language_model" \
@@ -46,20 +46,21 @@ ACCELERATE_CPU_AFFINITY=1 torchrun --nproc_per_node="${NUM_GPUS}" --nnodes="${NN
     --mm_patch_merge_type spatial_unpad \
     --bf16 True \
     --run_name $MID_RUN_NAME \
-    --output_dir "checkpoints/${MID_RUN_NAME}" \
+    --output_dir "checkpoints/llavanext-small-1.5b" \
     --num_train_epochs 1 \
-    --per_device_train_batch_size 4 \
-    --per_device_eval_batch_size 4 \
-    --gradient_accumulation_steps 1 \
+    --per_device_train_batch_size 1 \
+    --per_device_eval_batch_size 1 \
+    --gradient_accumulation_steps 16 \
+    --gradient_checkpointing True \
     --evaluation_strategy "no" \
     --save_strategy "steps" \
-    --save_steps 3000 \
+    --save_steps 2000 \
     --save_total_limit 1 \
     --learning_rate 1e-5 \
     --weight_decay 0. \
     --warmup_ratio 0.03 \
     --lr_scheduler_type "cosine" \
-    --logging_steps 1 \
+    --logging_steps 5 \
     --tf32 True \
     --model_max_length 32768 \
     --gradient_checkpointing True \
