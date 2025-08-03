@@ -1,12 +1,18 @@
+export NUM_GPUS=2
+export NNODES=1
+export RANK=0
+export ADDR=localhost
+export PORT=29500
+
 export OMP_NUM_THREADS=8
 export NCCL_IB_DISABLE=0
 export NCCL_IB_GID_INDEX=3
 export NCCL_SOCKET_IFNAME=eth0
 export NCCL_DEBUG=INFO
 
-LLM_VERSION="Qwen/Qwen2-7B-Instruct"
+LLM_VERSION="/root/autodl-tmp/models/qwen2.5-0.5b-instr"
 LLM_VERSION_CLEAN="${LLM_VERSION//\//_}"
-VISION_MODEL_VERSION="google/siglip-so400m-patch14-384"
+VISION_MODEL_VERSION="/root/autodl-tmp/models/siglip-so400m-p14-384"
 VISION_MODEL_VERSION_CLEAN="${VISION_MODEL_VERSION//\//_}"
 
 ############### Pretrain ################
@@ -21,8 +27,8 @@ ACCELERATE_CPU_AFFINITY=1 torchrun --nproc_per_node="${NUM_GPUS}" --nnodes="${NN
     --deepspeed scripts/zero3.json \
     --model_name_or_path ${LLM_VERSION} \
     --version ${PROMPT_VERSION} \
-    --data_path /blip_558k/blip_558k_plain.json \
-    --image_folder /blip_558k/images \
+    --data_path /root/autodl-tmp/datasets/LLaVA_Train/LLaVA_PT/blip_laion_cc_sbu_558k.json \
+    --image_folder /root/autodl-tmp/datasets/LLaVA_Train/LLaVA_PT/images \
     --vision_tower ${VISION_MODEL_VERSION} \
     --mm_tunable_parts="mm_mlp_adapter" \
     --mm_vision_select_layer -2 \
@@ -30,25 +36,25 @@ ACCELERATE_CPU_AFFINITY=1 torchrun --nproc_per_node="${NUM_GPUS}" --nnodes="${NN
     --mm_use_im_start_end False \
     --mm_use_im_patch_token False \
     --bf16 True \
-    --output_dir /checkpoints/projectors/${BASE_RUN_NAME} \
+    --output_dir checkpoints/projectors/${BASE_RUN_NAME} \
     --num_train_epochs 1 \
-    --per_device_train_batch_size 16 \
-    --per_device_eval_batch_size 4 \
-    --gradient_accumulation_steps 1 \
+    --per_device_train_batch_size 8 \
+    --per_device_eval_batch_size 2 \
+    --gradient_accumulation_steps 4 \
     --evaluation_strategy "no" \
     --save_strategy "no" \
-    --save_steps 50000 \
+    --save_steps 10000 \
     --learning_rate 1e-3 \
     --weight_decay 0. \
     --warmup_ratio 0.03 \
     --lr_scheduler_type "cosine" \
-    --logging_steps 1 \
+    --logging_steps 10 \
     --tf32 True \
     --model_max_length 8192 \
     --gradient_checkpointing True \
     --dataloader_num_workers 16 \
     --lazy_preprocess True \
-    --report_to wandb \
+    --report_to tensorboard \
     --run_name $BASE_RUN_NAME \
     --attn_implementation sdpa
 
