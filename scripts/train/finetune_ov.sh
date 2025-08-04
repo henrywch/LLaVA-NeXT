@@ -1,19 +1,25 @@
+export NUM_GPUS=2
+export NNODES=1
+export RANK=0
+export ADDR=localhost
+export PORT=29500
+
 export OMP_NUM_THREADS=8
 export NCCL_IB_DISABLE=0
 export NCCL_IB_GID_INDEX=3
 export NCCL_SOCKET_IFNAME=eth0
 export NCCL_DEBUG=INFO
 
-LLM_VERSION="Qwen/Qwen2-7B-Instruct" 
+LLM_VERSION="/root/autodl-tmp/models/qwen2.5-0.5b-instr" 
 # for 7b model we recommend bs=1, accum=2, 16 nodes, 128 gpus, lr=1e-5, warmup=0.03
 # for 72b model we recommend bs=1, accum=1, 32 nodes, 256 gpus, lr=1e-5, warmup=0.03
 LLM_VERSION_CLEAN="${LLM_VERSION//\//_}"
-VISION_MODEL_VERSION="google/siglip-so400m-patch14-384"
+VISION_MODEL_VERSION="/root/autodl-tmp/models/siglip-so400m-p14-384"
 VISION_MODEL_VERSION_CLEAN="${VISION_MODEL_VERSION//\//_}"
 
 ############### Pretrain ################
 
-BASE_RUN_NAME="llavanext-google_siglip-so400m-patch14-384-Qwen_Qwen2-7B-Instruct-mlp2x_gelu-pretrain_blip558k_plain"
+BASE_RUN_NAME="llavanext-google_siglip-so400m-p14-384-_root_autodl-tmp_models_qwen2.5-0.5b-instr-mlp2x_gelu-pretrain_blip558k_plain"
 echo "BASE_RUN_NAME: ${BASE_RUN_NAME}"
 
 ############### Finetune ################
@@ -21,7 +27,7 @@ echo "BASE_RUN_NAME: ${BASE_RUN_NAME}"
 # Stage 2
 PROMPT_VERSION="qwen_1_5"
 RUN_NAME="llava-onevision-${VISION_MODEL_VERSION_CLEAN}-${LLM_VERSION_CLEAN}-ov_stage_am9" 
-PREV_STAGE_CHECKPOINT="/mnt/bn/vl-research/checkpoints/onevision/llavanext-google_siglip-so400m-patch14-384-Qwen_Qwen2-7B-Instruct-mid_to_final_next_3m_am9_july14" # replace it with your last checkpoint training from single image collection
+PREV_STAGE_CHECKPOINT="/root/autodl-tmp/models/projectors/llavanext-_root_autodl-tmp_models_siglip-so400m-p14-384-_root_autodl-tmp_models_qwen2.5-0.5b-instr-mlp2x_gelu-pretrain_blip558k_plain" # replace it with your last checkpoint training from single image collection
 echo "PREV_STAGE_CHECKPOINT: ${PREV_STAGE_CHECKPOINT}"
 echo "MID_RUN_NAME: ${RUN_NAME}"
 
