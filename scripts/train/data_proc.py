@@ -7,9 +7,9 @@ from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # ====== CONFIG ======
-data_path = '/root/autodl-tmp/datasets/LLaVA-ReCap-118K/data/'
-image_folder = '/root/autodl-tmp/datasets/LLaVA_Train/LLaVA_S1_5/coco/train2017/'
-json_out = '/root/autodl-tmp/datasets/LLaVA_Train/LLaVA_S1_5/coco118k_stage1.5_finetune_w_prompt.json'
+data_path = '/root/autodl-tmp/datasets/LLaVA_Train/LLaVA_SFT/data/'
+image_folder = '/root/autodl-tmp/datasets/LLaVA_Train/LLaVA_SFT/images'
+json_out = '/root/autodl-tmp/datasets/LLaVA_Train/LLaVA_SFT/llava70k-v1.6-finetune.json'
 num_workers = 8
 
 # ====== LOAD ======
@@ -21,6 +21,9 @@ df = pd.concat(dfs, ignore_index=True)
 
 # ====== PROCESS ======
 def process_row(row):
+    if row["image"] is None:
+        return None
+    
     img_id = row["id"]
     img_bytes = row["image"]['bytes']
 
@@ -29,11 +32,9 @@ def process_row(row):
     if img is None:
         print(f"Warning: image {img_id} cannot be decoded.")
         return None
-    save_rel_path = f"coco/train2017/{img_id}.jpg"
+    save_rel_path = f"images/{img_id}.jpg"
     save_abs_path = os.path.join(image_folder, f"{img_id}.jpg")
     cv2.imwrite(save_abs_path, img)
-
-    row["conversations"][0]["value"] += "\nPlease study the given image carefully and generate detailed descriptions of this image."
 
     record = {
         "id": img_id,
@@ -53,6 +54,8 @@ with ThreadPoolExecutor(max_workers=num_workers) as executor:
         result = future.result()
         if result is not None:
             output_data.append(result)
+
+print(f"Total Entries: {len(output_data)}")
 
 # ===== SAVE ======
 with tqdm(total=1, desc="Saving JSON") as pbar:
