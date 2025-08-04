@@ -1,38 +1,46 @@
+export NUM_GPUS=2
+export NNODES=1
+export RANK=0
+export ADDR=localhost
+export PORT=29500
+
 export OMP_NUM_THREADS=8
 export NCCL_IB_DISABLE=0
 export NCCL_IB_GID_INDEX=3
 export NCCL_SOCKET_IFNAME=eth0
 export NCCL_DEBUG=INFO
 
-LLM_VERSION="Qwen/Qwen2-7B-Instruct" 
+LLM_VERSION="/root/autodl-tmp/models/qwen2.5-0.5b-instr" 
 # for 7b model we recommend bs=1, accum=2, 16 nodes, 128 gpus, lr=1e-5, warmup=0.03
 # for 72b model we recommend bs=1, accum=1, 32 nodes, 256 gpus, lr=1e-5, warmup=0.03
 LLM_VERSION_CLEAN="${LLM_VERSION//\//_}"
-VISION_MODEL_VERSION="google/siglip-so400m-patch14-384"
+VISION_MODEL_VERSION="/root/autodl-tmp/models/siglip-so400m-p14-384"
 VISION_MODEL_VERSION_CLEAN="${VISION_MODEL_VERSION//\//_}"
 
 ############### Pretrain ################
 
-BASE_RUN_NAME="llavanext-google_siglip-so400m-patch14-384-Qwen_Qwen2-7B-Instruct-mlp2x_gelu-pretrain_blip558k_plain"
+BASE_RUN_NAME="llavanext-_root_autodl-tmp_models_siglip-so400m-p14-384-_root_autodl-tmp_models_qwen2.5-0.5b-instr-mlp2x_gelu-pretrain_blip558k_plain"
 echo "BASE_RUN_NAME: ${BASE_RUN_NAME}"
+MID_RUN_NAME="llavanext-${VISION_MODEL_VERSION_CLEAN}-${LLM_VERSION_CLEAN}-mlp2x_gelu-stage1.5_co118kf_qwen_1_5"
+echo "MID_RUN_NAME: ${MID_RUN_NAME}"
 
 ############### Finetune ################
 
 # Stage 2
 PROMPT_VERSION="qwen_1_5"
-RUN_NAME="llava-onevision-${VISION_MODEL_VERSION_CLEAN}-${LLM_VERSION_CLEAN}-si_stage_am9" 
-PREV_STAGE_CHECKPOINT="/mnt/bn/vl-research/checkpoints/onevision/xxxxxxxxxxxxxxxx" # replace it with your last checkpoint training from mid stage
+llavanext-${VISION_MODEL_VERSION_CLEAN}-${LLM_VERSION_CLEAN}-mlp2x_gelu-stage2_mix665k_plain
+NEXT_RUN_NAME="llavanext-${VISION_MODEL_VERSION_CLEAN}-${LLM_VERSION_CLEAN}-mlp2x_gelu-stage2_mix665k_qwen_1_5" 
+PREV_STAGE_CHECKPOINT="/root/autodl-tmp/models/llavanext-mid-0.5b" # replace it with your last checkpoint training from mid stage
 echo "PREV_STAGE_CHECKPOINT: ${PREV_STAGE_CHECKPOINT}"
-echo "MID_RUN_NAME: ${RUN_NAME}"
+echo "NEXT_RUN_NAME: ${NEXT_RUN_NAME}"
 
 ACCELERATE_CPU_AFFINITY=1 torchrun --nproc_per_node="${NUM_GPUS}" --nnodes="${NNODES}" --node_rank="${RANK}" --master_addr="${ADDR}" --master_port="${PORT}" \
     llava/train/train_mem.py \
     --deepspeed scripts/zero3.json \
     --model_name_or_path $PREV_STAGE_CHECKPOINT \
     --version $PROMPT_VERSION \
-    --data_path /mnt/bn/vl-research/workspace/boli01/projects/LLaVA_Next/scripts/i18n/scale_llms/next_3p2m_single_image.yaml \
-    --image_folder /mnt/bn/vl-research/data/llava_data \
-    --video_folder /mnt/bn/vl-research/data/llava_video \
+    --data_path /root/autodl-tmp/datasets/LLaVA_Train/LLaVA_SFT/llava_v1_5_mix665k.json \
+    --image_folder /root/autodl-tmp/datasets/LLaVA_Train/LLaVA_SFT \
     --mm_tunable_parts="mm_vision_tower,mm_mlp_adapter,mm_language_model" \
     --mm_vision_tower_lr=2e-6 \
     --vision_tower ${VISION_MODEL_VERSION} \
@@ -45,8 +53,8 @@ ACCELERATE_CPU_AFFINITY=1 torchrun --nproc_per_node="${NUM_GPUS}" --nnodes="${NN
     --image_grid_pinpoints  "(1x1),...,(6x6)" \
     --mm_patch_merge_type spatial_unpad \
     --bf16 True \
-    --run_name $RUN_NAME \
-    --output_dir /mnt/bn/vl-research/checkpoints/onevision/$RUN_NAME \
+    --run_name ${NEXT_RUN_NAME} \
+    --output_dir checkpoints/llavanext/${NEXT_RUN_NAME} \
     --num_train_epochs 1 \
     --per_device_train_batch_size 1 \
     --per_device_eval_batch_size 4 \
@@ -65,7 +73,7 @@ ACCELERATE_CPU_AFFINITY=1 torchrun --nproc_per_node="${NUM_GPUS}" --nnodes="${NN
     --gradient_checkpointing True \
     --dataloader_num_workers 4 \
     --lazy_preprocess True \
-    --report_to wandb \
+    --report_to tensorboard \
     --torch_compile True \
     --torch_compile_backend "inductor" \
     --dataloader_drop_last True \
