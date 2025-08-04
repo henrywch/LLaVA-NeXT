@@ -57,25 +57,27 @@ ACCELERATE_CPU_AFFINITY=1 torchrun --nproc_per_node="${NUM_GPUS}" --nnodes="${NN
     --output_dir checkpoints/llavanext/${NEXT_RUN_NAME} \
     --num_train_epochs 1 \
     --per_device_train_batch_size 1 \
-    --per_device_eval_batch_size 4 \
+    --per_device_eval_batch_size 1 \
     --gradient_accumulation_steps 2 \
     --evaluation_strategy "no" \
     --save_strategy "steps" \
-    --save_steps 1000 \
+    --save_steps 3000 \
     --save_total_limit 1 \
     --learning_rate 1e-5 \
     --weight_decay 0. \
     --warmup_ratio 0.03 \
     --lr_scheduler_type "cosine" \
-    --logging_steps 1 \
+    --logging_steps 10 \
     --tf32 True \
-    --model_max_length 32768 \
+    --model_max_length 24576 \
     --gradient_checkpointing True \
     --dataloader_num_workers 4 \
     --lazy_preprocess True \
     --report_to tensorboard \
-    --torch_compile True \
-    --torch_compile_backend "inductor" \
     --dataloader_drop_last True \
-    --frames_upbound 32
+    --torch_compile False \
+    --attn_implementation flash_attention_2
+    # --video_folder your_video_dataset_path \
+    # --frames_upbound 32 \
+    # --torch_compile_backend "inductor" 
 exit 0;
