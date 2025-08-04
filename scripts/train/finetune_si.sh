@@ -1,4 +1,4 @@
-export NUM_GPUS=2
+export NUM_GPUS=4
 export NNODES=1
 export RANK=0
 export ADDR=localhost
@@ -39,7 +39,7 @@ ACCELERATE_CPU_AFFINITY=1 torchrun --nproc_per_node="${NUM_GPUS}" --nnodes="${NN
     --deepspeed scripts/zero3.json \
     --model_name_or_path ${PREV_STAGE_CHECKPOINT} \
     --version ${PROMPT_VERSION} \
-    --data_path /root/autodl-tmp/datasets/LLaVA_Train/LLaVA_SFT/llava_v1_5_mix665k.json \
+    --data_path /root/autodl-tmp/datasets/LLaVA_Train/LLaVA_SFT/llava_v1_5_mix60k.json \
     --image_folder /root/autodl-tmp/datasets/LLaVA_Train/LLaVA_SFT \
     --mm_tunable_parts="mm_vision_tower,mm_mlp_adapter,mm_language_model" \
     --mm_vision_tower_lr=2e-6 \
@@ -58,7 +58,7 @@ ACCELERATE_CPU_AFFINITY=1 torchrun --nproc_per_node="${NUM_GPUS}" --nnodes="${NN
     --num_train_epochs 1 \
     --per_device_train_batch_size 1 \
     --per_device_eval_batch_size 1 \
-    --gradient_accumulation_steps 2 \
+    --gradient_accumulation_steps 4 \
     --evaluation_strategy "no" \
     --save_strategy "steps" \
     --save_steps 3000 \
@@ -69,7 +69,7 @@ ACCELERATE_CPU_AFFINITY=1 torchrun --nproc_per_node="${NUM_GPUS}" --nnodes="${NN
     --lr_scheduler_type "cosine" \
     --logging_steps 10 \
     --tf32 True \
-    --model_max_length 24576 \
+    --model_max_length 32768 \
     --gradient_checkpointing True \
     --dataloader_num_workers 4 \
     --lazy_preprocess True \
