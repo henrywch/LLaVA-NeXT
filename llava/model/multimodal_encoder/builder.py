@@ -14,22 +14,22 @@ def build_vision_tower(vision_tower_cfg, **kwargs):
     vision_tower = getattr(vision_tower_cfg, "mm_vision_tower", getattr(vision_tower_cfg, "vision_tower", None))
     
     assert vision_tower is not None
-    is_absolute_path_exists = os.path.exists(vision_tower)
+    vision_tower_raw = vision_tower.split('/')[-1] if (is_absolute_path_exists := os.path.exists(vision_tower)) else vision_tower
     use_s2 = getattr(vision_tower_cfg, "s2", False)
-    if not is_absolute_path_exists and (vision_tower.startswith("openai") or vision_tower.startswith("laion") or "ShareGPT4V" in vision_tower):
+    iif "clip" in vision_tower_raw or (vision_tower_raw.startswith("openai") or vision_tower_raw.startswith("laion") or "ShareGPT4V" in vision_tower_raw):
         if use_s2:
             return CLIPVisionTowerS2(vision_tower, args=vision_tower_cfg, **kwargs)
         else:
             return CLIPVisionTower(vision_tower, args=vision_tower_cfg, **kwargs)
-    elif "siglip" in vision_tower:
+    elif "siglip" in vision_tower_raw:
         return SigLipVisionTower(vision_tower, vision_tower_cfg=vision_tower_cfg, **kwargs)
-    elif vision_tower.startswith("hf:"):
+    elif vision_tower_raw.startswith("hf:"):
         return HFVisionTower(vision_tower, args=vision_tower_cfg, **kwargs)
-    elif vision_tower in ["imagebind_huge"]:
+    elif vision_tower_raw in ["imagebind_huge"]:
         return ImageBindWrapper(vision_tower, args=vision_tower_cfg, **kwargs)
-    elif vision_tower.startswith("open_clip_hub"):
+    elif vision_tower_raw.startswith("open_clip_hub"):
         return OpenCLIPVisionTower(vision_tower, args=vision_tower_cfg, **kwargs)
-    elif "mlcd-vit-bigG-patch14" in vision_tower:
+    elif "mlcd-vit-bigG-patch14" in vision_tower_raw:
         if use_s2:
             return MLCDVisionTowerS2(vision_tower, args=vision_tower_cfg, **kwargs)
         else:
