@@ -1,4 +1,4 @@
-export NUM_GPUS=2
+export NUM_GPUS=4
 export NNODES=1
 export RANK=0
 export ADDR=localhost
@@ -19,26 +19,27 @@ VISION_MODEL_VERSION_CLEAN="${VISION_MODEL_VERSION//\//_}"
 
 ############### Pretrain ################
 
-BASE_RUN_NAME="llavanext-google_siglip-so400m-p14-384-_root_autodl-tmp_models_qwen2.5-0.5b-instr-mlp2x_gelu-pretrain_blip558k_plain"
+BASE_RUN_NAME="llavanext-_root_autodl-tmp_models_siglip-so400m-p14-384-_root_autodl-tmp_models_qwen2.5-0.5b-instr-mlp2x_gelu-pretrain_blip558k_plain"
 echo "BASE_RUN_NAME: ${BASE_RUN_NAME}"
+MID_RUN_NAME="llavanext-${VISION_MODEL_VERSION_CLEAN}-${LLM_VERSION_CLEAN}-mlp2x_gelu-stage1.5_co118kf_qwen_1_5"
+echo "MID_RUN_NAME: ${MID_RUN_NAME}"
 
 ############### Finetune ################
 
 # Stage 2
 PROMPT_VERSION="qwen_1_5"
-RUN_NAME="llava-onevision-${VISION_MODEL_VERSION_CLEAN}-${LLM_VERSION_CLEAN}-ov_stage_am9" 
-PREV_STAGE_CHECKPOINT="/root/autodl-tmp/models/projectors/llavanext-_root_autodl-tmp_models_siglip-so400m-p14-384-_root_autodl-tmp_models_qwen2.5-0.5b-instr-mlp2x_gelu-pretrain_blip558k_plain" # replace it with your last checkpoint training from single image collection
+NEXT_RUN_NAME="llavanext-${VISION_MODEL_VERSION_CLEAN}-${LLM_VERSION_CLEAN}-mlp2x_gelu-stage2_mix665k_qwen_1_5" 
+PREV_STAGE_CHECKPOINT="/root/autodl-tmp/models/llavanext-mid-0.5b" # replace it with your last checkpoint training from single image collection
 echo "PREV_STAGE_CHECKPOINT: ${PREV_STAGE_CHECKPOINT}"
-echo "MID_RUN_NAME: ${RUN_NAME}"
+echo "NEXT_RUN_NAME: ${NEXT_RUN_NAME}"
 
 ACCELERATE_CPU_AFFINITY=1 torchrun --nproc_per_node="${NUM_GPUS}" --nnodes="${NNODES}" --node_rank="${RANK}" --master_addr="${ADDR}" --master_port="${PORT}" \
     llava/train/train_mem.py \
     --deepspeed scripts/zero3.json \
-    --model_name_or_path $PREV_STAGE_CHECKPOINT \
-    --version $PROMPT_VERSION \
-    --data_path /mnt/bn/vl-research/workspace/boli01/projects/LLaVA_Next/scripts/i18n/scale_llms/next_ov_stage_july21.yaml \
-    --image_folder /mnt/bn/vl-research/data/llava_data \
-    --video_folder /mnt/bn/vl-research/data/llava_video \
+    --model_name_or_path ${PREV_STAGE_CHECKPOINT} \
+    --version ${PROMPT_VERSION} \
+    --data_path /root/autodl-tmp/datasets/LLaVA_Train/LLaVA_SFT/llava_v1_5_mix60k.json \
+    --image_folder /root/autodl-tmp/datasets/LLaVA_Train/LLaVA_SFT \
     --mm_tunable_parts="mm_vision_tower,mm_mlp_adapter,mm_language_model" \
     --mm_vision_tower_lr=2e-6 \
     --vision_tower ${VISION_MODEL_VERSION} \
@@ -51,12 +52,12 @@ ACCELERATE_CPU_AFFINITY=1 torchrun --nproc_per_node="${NUM_GPUS}" --nnodes="${NN
     --image_grid_pinpoints  "(1x1),...,(6x6)" \
     --mm_patch_merge_type spatial_unpad \
     --bf16 True \
-    --run_name $RUN_NAME \
-    --output_dir /mnt/bn/vl-research/checkpoints/onevision/$RUN_NAME \
+    --run_name ${NEXT_RUN_NAME} \
+    --output_dir /root/autodl-tmp/models/checkpoints/llavanext/${NEXT_RUN_NAME} \
     --num_train_epochs 1 \
     --per_device_train_batch_size 1 \
-    --per_device_eval_batch_size 4 \
-    --gradient_accumulation_steps 2 \
+    --per_device_eval_batch_size 1 \
+    --gradient_accumulation_steps 16 \
     --evaluation_strategy "no" \
     --save_strategy "steps" \
     --save_steps 1000 \
@@ -71,11 +72,13 @@ ACCELERATE_CPU_AFFINITY=1 torchrun --nproc_per_node="${NUM_GPUS}" --nnodes="${NN
     --gradient_checkpointing True \
     --dataloader_num_workers 4 \
     --lazy_preprocess True \
-    --report_to wandb \
-    --torch_compile True \
-    --torch_compile_backend "inductor" \
+    --report_to tensorboard \
+    --torch_compile False \
     --dataloader_drop_last True \
-    --frames_upbound 32
+    --attn_implementation flash_attention_2
+    # --video_folder /mnt/bn/vl-research/data/llava_video \
+    # --frames_upbound 32 \
+    # --torch_compile_backend "inductor"
 exit 0;
 
 # You can delete the sdpa attn_implementation if you want to use flash attn

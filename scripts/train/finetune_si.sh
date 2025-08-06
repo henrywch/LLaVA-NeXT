@@ -28,7 +28,6 @@ echo "MID_RUN_NAME: ${MID_RUN_NAME}"
 
 # Stage 2
 PROMPT_VERSION="qwen_1_5"
-llavanext-${VISION_MODEL_VERSION_CLEAN}-${LLM_VERSION_CLEAN}-mlp2x_gelu-stage2_mix665k_plain
 NEXT_RUN_NAME="llavanext-${VISION_MODEL_VERSION_CLEAN}-${LLM_VERSION_CLEAN}-mlp2x_gelu-stage2_mix665k_qwen_1_5" 
 PREV_STAGE_CHECKPOINT="/root/autodl-tmp/models/llavanext-mid-0.5b" # replace it with your last checkpoint training from mid stage
 echo "PREV_STAGE_CHECKPOINT: ${PREV_STAGE_CHECKPOINT}"
@@ -54,7 +53,7 @@ ACCELERATE_CPU_AFFINITY=1 torchrun --nproc_per_node="${NUM_GPUS}" --nnodes="${NN
     --mm_patch_merge_type spatial_unpad \
     --bf16 True \
     --run_name ${NEXT_RUN_NAME} \
-    --output_dir checkpoints/llavanext/${NEXT_RUN_NAME} \
+    --output_dir /root/autodl-tmp/models/checkpoints/llavanext/${NEXT_RUN_NAME} \
     --num_train_epochs 1 \
     --per_device_train_batch_size 1 \
     --per_device_eval_batch_size 1 \
