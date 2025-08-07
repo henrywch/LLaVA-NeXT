@@ -1,20 +1,20 @@
 from huggingface_hub import HfApi, HfFolder
 import os
 
-repo_id = "henrywch2huggingface/LLaVA_Train"
+repo_id = "henrywch2huggingface/llavanext-scaled-0.5b"
 
 upload_mappings = [
     {
-        "local_path": "/root/autodl-tmp/datasets/LLaVA_Train/LLaVA_PT/.parquets",
-        "repo_path": "LLaVA_PT/.parquets"
+        "local_path": "/root/autodl-tmp/models/projectors/llavanext-_root_autodl-tmp_models_siglip-so400m-p14-384-_root_autodl-tmp_models_qwen2.5-0.5b-instr-mlp2x_gelu-pretrain_blip558k_plain",
+        "repo_path": "projectors"
     },
     {
-        "local_path": "/root/autodl-tmp/datasets/LLaVA_Train/LLaVA_S1_5/.parquets",
-        "repo_path": "LLaVA_S1_5/.parquets"
+        "local_path": "/root/autodl-tmp/models/llavanext-mid-0.5b",
+        "repo_path": "transition_model"
     },
     {
-        "local_path": "/root/autodl-tmp/datasets/LLaVA_Train/LLaVA_SFT/.parquets",
-        "repo_path": "LLaVA_SFT/.parquets"
+        "local_path": "/root/autodl-tmp/models/llavanext-scaled-0.5b/training_loss.png",
+        "repo_path": "training_loss.png"
     }
 ]
 
@@ -23,7 +23,7 @@ api = HfApi()
 print(f"Creating repository '{repo_id}' if it doesn't exist...")
 api.create_repo(
     repo_id=repo_id,
-    repo_type="dataset",
+    repo_type="model",
     exist_ok=True,
 )
 
@@ -43,7 +43,7 @@ for mapping in upload_mappings:
                 folder_path=local_file_or_dir,
                 path_in_repo=path_in_repo,
                 repo_id=repo_id,
-                repo_type="dataset"
+                repo_type="model"
             )
         elif os.path.isfile(local_file_or_dir):
             print(f"  - Uploading FILE '{local_file_or_dir}' to '{path_in_repo}'...")
@@ -51,7 +51,7 @@ for mapping in upload_mappings:
                 path_or_fileobj=local_file_or_dir,
                 path_in_repo=path_in_repo,
                 repo_id=repo_id,
-                repo_type="dataset"
+                repo_type="model"
             )
     except Exception as e:
         print(f"❌  Error uploading {local_file_or_dir}: {e}")
